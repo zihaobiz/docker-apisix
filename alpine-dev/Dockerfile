@@ -1,10 +1,10 @@
 ARG ENABLE_PROXY=false
+
 FROM openresty/openresty:alpine-fat AS production-stage
-ARG APISIX_VERSION=2.2
-LABEL apisix_version="${APISIX_VERSION}"
+
 ARG ENABLE_PROXY
 RUN set -x \
-    && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories) \
+    && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i 's,http://dl-cdn.alpinelinux.org,https://mirrors.aliyun.com,g' /etc/apk/repositories) \
     && apk add --no-cache --virtual .builddeps \
     automake \
     autoconf \
@@ -12,8 +12,8 @@ RUN set -x \
     pkgconfig \
     cmake \
     git \
-    && luarocks install https://github.com/apache/apisix/raw/master/rockspec/apisix-${APISIX_VERSION}-0.rockspec --tree=/usr/local/apisix/deps \
-    && cp -v /usr/local/apisix/deps/lib/luarocks/rocks-5.1/apisix/${APISIX_VERSION}-0/bin/apisix /usr/bin/ \
+    && luarocks install https://github.com/apache/apisix/raw/master/rockspec/apisix-master-0.rockspec --tree=/usr/local/apisix/deps \
+    && cp -v /usr/local/apisix/deps/lib/luarocks/rocks-5.1/apisix/master-0/bin/apisix /usr/bin/ \
     && bin='#! /usr/local/openresty/luajit/bin/luajit\npackage.path = "/usr/local/apisix/?.lua;" .. package.path' \
     && sed -i "1s@.*@$bin@" /usr/bin/apisix \
     && mv /usr/local/apisix/deps/share/lua/5.1/apisix /usr/local/apisix \
@@ -24,7 +24,7 @@ FROM alpine:3.11 AS last-stage
 ARG ENABLE_PROXY
 # add runtime for Apache APISIX
 RUN set -x \
-    && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i "s/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g" /etc/apk/repositories) \
+    && (test "${ENABLE_PROXY}" != "true" || /bin/sed -i 's,http://dl-cdn.alpinelinux.org,https://mirrors.aliyun.com,g' /etc/apk/repositories) \
     && apk add --no-cache bash libstdc++ curl
 
 WORKDIR /usr/local/apisix
